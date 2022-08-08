@@ -8,4 +8,7 @@ router.register(r'categories', views.CategoryViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+	path("products/<str:product_code>", views.ProductDetail.as_view(), name="product-detail"),
+	path("categories/<str:name>", views.CategoryDetail.as_view(), name="category-detail"),
+
 ]
