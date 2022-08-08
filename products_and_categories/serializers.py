@@ -3,45 +3,53 @@ from products_and_categories.models import Product, Category
 from django.db import models
 
 class CategorySerializer(serializers.ModelSerializer):
-	def to_representation(self, obj):
-		if 'categories' not in self.fields:
-			self.fields['categories'] = CategorySerializer(obj, many=True)      
-		return super(CategorySerializer, self).to_representation(obj)
+	sub_categories = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+		queryset=Category.objects.all(),
+		allow_null=True,
+		required = False
+     )
+	link = serializers.HyperlinkedIdentityField(view_name="category-detail", lookup_field="name")
 
 	class Meta:
 		model = Category
-		fields = ('id', "name", 'products', 'categories')
+		fields = ("name","link", 'products', 'sub_categories')
+		
 	
 class ProductSerializer(serializers.ModelSerializer):
-	categories = CategorySerializer(many=True, required=False)
+	link = serializers.HyperlinkedIdentityField(view_name="product-detail", lookup_field="product_code")
+	categories = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+		queryset=Category.objects.all(),
+		allow_null=True,
+		required = False
+     )
 	
 	class Meta:
 		model = Product
-		fields = ('id', "product_code", "name", "quantity", "price", 'categories')
+		fields = ( "product_code", "name", "link", "quantity", "price", 'categories')
 
 	def update(self, instance, validated_data):
-		if 'categories' in validated_data:
-			category_data = validated_data.pop('categories')
 
 		instance.product_code = validated_data.get('product_code', instance.product_code)
 		instance.name = validated_data.get('name', instance.name)
 		instance.quantity = validated_data.get('quantity', instance.quantity)
 		instance.price = validated_data.get('price', instance.price)
-		instance.categories = validated_data.get('categories', instance.categories)
+		instance.categories.set(validated_data.get('categories', instance.categories))
 		
 		instance.save()
 		return instance
 
-	def create(self, validated_data):
-		category_data = validated_data.pop('categories')
+	def create(self, validated_data):		
+		if "categories" in validated_data:
+			category_data = validated_data.pop('categories')
+			product = Product.objects.create(**validated_data)
+			for category in category_data:
+				product.categories.add(category)
+			return product
 		product = Product.objects.create(**validated_data)
-		dicti={}
-		for items in category_data:
-			for key, value in items.items() :
-				dicti[key] = value
-		if 'id' in dicti:
-			x= product.categories.get_or_create(id = dicti['id'])
-			product.categories.set(x)
 		return product
 
 

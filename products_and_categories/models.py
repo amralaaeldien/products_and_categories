@@ -3,21 +3,19 @@ from django.db import models
 # Create your models here.
 
 class Category(models.Model):
-	id = models.PositiveIntegerField(primary_key=True)
-	name = models.CharField(max_length=255)
-	categories= models.ManyToManyField('self', related_name='categories', blank=True, null=True)
+	name = models.CharField(max_length=255, unique=True)
+	main_category= models.ForeignKey('self', related_name='sub_categories',on_delete=models.SET_NULL, blank=True, null=True)
 
 	def __str__(self):
 		return self.name
 
 class Product(models.Model):
-	id = models.PositiveIntegerField(primary_key=True)
-	product_code = models.CharField(max_length=255)
-	name = models.CharField(max_length=255)
-	price = models.IntegerField()
-	quantity = models.IntegerField()
-	categories = models.ManyToManyField(Category, related_name='products',blank=True)
+	product_code = models.CharField(max_length=255, unique=True)
+	name = models.CharField(max_length=255,blank=True, null=True )
+	price = models.IntegerField(blank=True, null=True)
+	quantity = models.IntegerField(blank=True, null=True)
+	categories = models.ManyToManyField(Category, related_name='products',blank=True, null=True)
 	
 	def __str__(self):
-		return self.name
+		return self.product_code
 
