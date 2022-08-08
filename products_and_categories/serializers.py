@@ -12,6 +12,7 @@ class CategorySerializer(serializers.ModelSerializer):
      )
 	link = serializers.HyperlinkedIdentityField(view_name="category-detail", lookup_field="name")
 
+
 	class Meta:
 		model = Category
 		fields = ("name","link", 'products', 'sub_categories')
